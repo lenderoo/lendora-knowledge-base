@@ -13,6 +13,10 @@ export interface Database {
         Row: {
           id: string
           case_id: string
+          initial_gut_feel: string | null
+          judgement_timing: string | null
+          is_key_decision_sample: boolean | null
+          case_value_level: string | null
           client_type: string | null
           visa_status: string | null
           employment_type: string | null
@@ -28,15 +32,24 @@ export interface Database {
           loan_amount: number | null
           lvr: number | null
           deposit_source: string | null
-          challenges: string | null
-          solution: string | null
+          excluded_paths: string[] | null
+          excluded_reasons: Json | null
+          primary_concern: string | null
+          core_risk_priority: string | null
+          secondary_risks: string[] | null
+          decision_one_liner: string | null
+          decision_logic_summary: string | null
+          current_action: string | null
           lender: string | null
           product_type: string | null
           approved_amount: number | null
           interest_rate: number | null
           approval_time: string | null
-          result: string | null
-          key_takeaway: string | null
+          final_outcome: string | null
+          outcome_vs_initial_judgement: string | null
+          deviation_reasons: string[] | null
+          retrospective_change: string | null
+          future_instruction: string | null
           tags: string[] | null
           broker_name: string | null
           notes: string | null
@@ -48,6 +61,10 @@ export interface Database {
         Insert: {
           id?: string
           case_id: string
+          initial_gut_feel?: string | null
+          judgement_timing?: string | null
+          is_key_decision_sample?: boolean | null
+          case_value_level?: string | null
           client_type?: string | null
           visa_status?: string | null
           employment_type?: string | null
@@ -63,15 +80,24 @@ export interface Database {
           loan_amount?: number | null
           lvr?: number | null
           deposit_source?: string | null
-          challenges?: string | null
-          solution?: string | null
+          excluded_paths?: string[] | null
+          excluded_reasons?: Json | null
+          primary_concern?: string | null
+          core_risk_priority?: string | null
+          secondary_risks?: string[] | null
+          decision_one_liner?: string | null
+          decision_logic_summary?: string | null
+          current_action?: string | null
           lender?: string | null
           product_type?: string | null
           approved_amount?: number | null
           interest_rate?: number | null
           approval_time?: string | null
-          result?: string | null
-          key_takeaway?: string | null
+          final_outcome?: string | null
+          outcome_vs_initial_judgement?: string | null
+          deviation_reasons?: string[] | null
+          retrospective_change?: string | null
+          future_instruction?: string | null
           tags?: string[] | null
           broker_name?: string | null
           notes?: string | null
@@ -83,6 +109,10 @@ export interface Database {
         Update: {
           id?: string
           case_id?: string
+          initial_gut_feel?: string | null
+          judgement_timing?: string | null
+          is_key_decision_sample?: boolean | null
+          case_value_level?: string | null
           client_type?: string | null
           visa_status?: string | null
           employment_type?: string | null
@@ -98,15 +128,24 @@ export interface Database {
           loan_amount?: number | null
           lvr?: number | null
           deposit_source?: string | null
-          challenges?: string | null
-          solution?: string | null
+          excluded_paths?: string[] | null
+          excluded_reasons?: Json | null
+          primary_concern?: string | null
+          core_risk_priority?: string | null
+          secondary_risks?: string[] | null
+          decision_one_liner?: string | null
+          decision_logic_summary?: string | null
+          current_action?: string | null
           lender?: string | null
           product_type?: string | null
           approved_amount?: number | null
           interest_rate?: number | null
           approval_time?: string | null
-          result?: string | null
-          key_takeaway?: string | null
+          final_outcome?: string | null
+          outcome_vs_initial_judgement?: string | null
+          deviation_reasons?: string[] | null
+          retrospective_change?: string | null
+          future_instruction?: string | null
           tags?: string[] | null
           broker_name?: string | null
           notes?: string | null

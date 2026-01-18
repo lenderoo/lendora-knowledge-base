@@ -24,9 +24,20 @@ import {
   EMPLOYMENT_TYPES,
   LOAN_PURPOSES,
   PROPERTY_TYPES,
-  RESULTS,
   LENDERS,
   COMMON_TAGS,
+  PRIMARY_CONCERNS,
+  EXCLUDED_PATHS,
+  EXCLUSION_REASONS,
+  INITIAL_GUT_FEELS,
+  CASE_VALUE_LEVELS,
+  JUDGEMENT_TIMING,
+  RISK_TYPES,
+  CURRENT_ACTIONS,
+  FINAL_OUTCOMES,
+  OUTCOME_JUDGEMENTS,
+  DEVIATION_REASONS,
+  RETROSPECTIVE_CHANGES,
 } from '@/lib/constants'
 
 interface CaseFormProps {
@@ -39,6 +50,10 @@ interface CaseFormProps {
 export function CaseForm({ initialData, onSave, onCancel, isLoading }: CaseFormProps) {
   const [formData, setFormData] = useState<CaseInsert>({
     case_id: '',
+    initial_gut_feel: '',
+    judgement_timing: '',
+    is_key_decision_sample: false,
+    case_value_level: '',
     client_type: '',
     visa_status: '',
     employment_type: '',
@@ -54,15 +69,24 @@ export function CaseForm({ initialData, onSave, onCancel, isLoading }: CaseFormP
     loan_amount: null,
     lvr: null,
     deposit_source: '',
-    challenges: '',
-    solution: '',
+    excluded_paths: [],
+    excluded_reasons: {},
+    primary_concern: '',
+    core_risk_priority: '',
+    secondary_risks: [],
+    decision_one_liner: '',
+    decision_logic_summary: '',
+    current_action: '',
     lender: '',
     product_type: '',
     approved_amount: null,
     interest_rate: null,
     approval_time: '',
-    result: '',
-    key_takeaway: '',
+    final_outcome: '',
+    outcome_vs_initial_judgement: '',
+    deviation_reasons: [],
+    retrospective_change: '',
+    future_instruction: '',
     tags: [],
     broker_name: '',
     notes: '',
@@ -79,7 +103,7 @@ export function CaseForm({ initialData, onSave, onCancel, isLoading }: CaseFormP
     }
   }, [initialData])
 
-  const handleChange = (name: string, value: string | number | null) => {
+  const handleChange = (name: string, value: string | number | boolean | string[] | Record<string, string> | Record<string, { tags: string[]; note: string }> | null) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
@@ -121,6 +145,139 @@ export function CaseForm({ initialData, onSave, onCancel, isLoading }: CaseFormP
 
   return (
     <form onSubmit={(e) => handleSubmit(e)} className="space-y-6">
+      {/* 决策入口 */}
+      <Card className="border-orange-200 bg-orange-50/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span>🔥</span> 决策入口
+            <span className="text-sm font-normal text-muted-foreground">AI 决策能力的起点</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>初始直觉判断 *</Label>
+              <p className="text-xs text-muted-foreground mb-2">在未深入分析前的第一直觉</p>
+              <div className="flex flex-wrap gap-2">
+                {INITIAL_GUT_FEELS.map((feel) => (
+                  <label
+                    key={feel.value}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                      formData.initial_gut_feel === feel.value
+                        ? 'border-primary bg-primary/10'
+                        : 'border-input hover:bg-muted'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="initial_gut_feel"
+                      value={feel.value}
+                      checked={formData.initial_gut_feel === feel.value}
+                      onChange={(e) => handleChange('initial_gut_feel', e.target.value)}
+                      className="sr-only"
+                    />
+                    <span className="text-sm">{feel.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>判断发生时间点 *</Label>
+              <p className="text-xs text-muted-foreground mb-2">做出这个判断时，信息完整程度</p>
+              <div className="flex flex-wrap gap-2">
+                {JUDGEMENT_TIMING.map((timing) => (
+                  <label
+                    key={timing.value}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                      formData.judgement_timing === timing.value
+                        ? 'border-primary bg-primary/10'
+                        : 'border-input hover:bg-muted'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="judgement_timing"
+                      value={timing.value}
+                      checked={formData.judgement_timing === timing.value}
+                      onChange={(e) => handleChange('judgement_timing', e.target.value)}
+                      className="sr-only"
+                    />
+                    <span className="text-sm">{timing.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>是否关键决策样本 *</Label>
+              <p className="text-xs text-muted-foreground mb-2">标记为 Yes 后部分字段变为必填</p>
+              <div className="flex gap-2">
+                <label
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md border cursor-pointer transition-colors ${
+                    formData.is_key_decision_sample === true
+                      ? 'border-primary bg-primary/10'
+                      : 'border-input hover:bg-muted'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="is_key_decision_sample"
+                    checked={formData.is_key_decision_sample === true}
+                    onChange={() => handleChange('is_key_decision_sample', true)}
+                    className="sr-only"
+                  />
+                  <span className="text-sm">Yes</span>
+                </label>
+                <label
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md border cursor-pointer transition-colors ${
+                    formData.is_key_decision_sample === false
+                      ? 'border-primary bg-primary/10'
+                      : 'border-input hover:bg-muted'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="is_key_decision_sample"
+                    checked={formData.is_key_decision_sample === false}
+                    onChange={() => handleChange('is_key_decision_sample', false)}
+                    className="sr-only"
+                  />
+                  <span className="text-sm">No</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>案件价值判断</Label>
+              <p className="text-xs text-muted-foreground mb-2">建议填写</p>
+              <div className="flex flex-wrap gap-2">
+                {CASE_VALUE_LEVELS.map((level) => (
+                  <label
+                    key={level.value}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                      formData.case_value_level === level.value
+                        ? 'border-primary bg-primary/10'
+                        : 'border-input hover:bg-muted'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="case_value_level"
+                      value={level.value}
+                      checked={formData.case_value_level === level.value}
+                      onChange={(e) => handleChange('case_value_level', e.target.value)}
+                      className="sr-only"
+                    />
+                    <span className="text-sm">{level.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* 客户信息 */}
       <Card>
         <CardHeader>
@@ -246,6 +403,33 @@ export function CaseForm({ initialData, onSave, onCancel, isLoading }: CaseFormP
                 onChange={(value) => handleChange('existing_debts', value)}
               />
             </div>
+
+            <div className="space-y-2 md:col-span-3">
+              <Label>最不放心的点（直觉）*</Label>
+              <p className="text-xs text-muted-foreground mb-2">第一反应，这个客户最让你担心的是什么？</p>
+              <div className="flex flex-wrap gap-3">
+                {PRIMARY_CONCERNS.map((concern) => (
+                  <label
+                    key={concern}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                      formData.primary_concern === concern
+                        ? 'border-primary bg-primary/10'
+                        : 'border-input hover:bg-muted'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="primary_concern"
+                      value={concern}
+                      checked={formData.primary_concern === concern}
+                      onChange={(e) => handleChange('primary_concern', e.target.value)}
+                      className="sr-only"
+                    />
+                    <span className="text-sm">{concern}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -338,39 +522,272 @@ export function CaseForm({ initialData, onSave, onCancel, isLoading }: CaseFormP
                 placeholder="自有存款/父母赠与"
               />
             </div>
+
+            <div className="space-y-2 md:col-span-3">
+              <Label>已明确排除的路径 *</Label>
+              <div className="flex flex-wrap gap-3">
+                {EXCLUDED_PATHS.map((path) => {
+                  const isChecked = formData.excluded_paths?.includes(path.value) || false
+                  return (
+                    <label
+                      key={path.value}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                        isChecked
+                          ? 'border-primary bg-primary/10'
+                          : 'border-input hover:bg-muted'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          const currentPaths = formData.excluded_paths || []
+                          const currentReasons = (formData.excluded_reasons || {}) as Record<string, string>
+                          if (e.target.checked) {
+                            handleChange('excluded_paths', [...currentPaths, path.value])
+                          } else {
+                            handleChange('excluded_paths', currentPaths.filter((p) => p !== path.value))
+                            const { [path.value]: _removed, ...restReasons } = currentReasons
+                            void _removed
+                            handleChange('excluded_reasons', restReasons)
+                          }
+                        }}
+                        className="sr-only"
+                      />
+                      <span className="text-sm">{path.label}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+
+            {formData.excluded_paths && formData.excluded_paths.length > 0 && (
+              <div className="space-y-4 md:col-span-3">
+                {formData.excluded_paths.map((pathValue) => {
+                  const path = EXCLUDED_PATHS.find((p) => p.value === pathValue)
+                  if (!path) return null
+                  const reasons = (formData.excluded_reasons || {}) as Record<string, { tags: string[]; note: string }>
+                  const pathReason = reasons[pathValue] || { tags: [], note: '' }
+                  return (
+                    <div key={pathValue} className="space-y-3 p-3 border rounded-md bg-muted/30">
+                      <Label>
+                        为什么不走【{path.label}】路径 *
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        {EXCLUSION_REASONS.map((reason) => {
+                          const isSelected = pathReason.tags?.includes(reason.value) || false
+                          return (
+                            <label
+                              key={reason.value}
+                              className={`flex items-center gap-2 px-2 py-1 rounded border cursor-pointer transition-colors text-sm ${
+                                isSelected
+                                  ? 'border-primary bg-primary/10'
+                                  : 'border-input hover:bg-muted'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  const currentReasons = (formData.excluded_reasons || {}) as Record<string, { tags: string[]; note: string }>
+                                  const currentTags = pathReason.tags || []
+                                  const newTags = e.target.checked
+                                    ? [...currentTags, reason.value]
+                                    : currentTags.filter((t) => t !== reason.value)
+                                  handleChange('excluded_reasons', {
+                                    ...currentReasons,
+                                    [pathValue]: { ...pathReason, tags: newTags },
+                                  })
+                                }}
+                                className="sr-only"
+                              />
+                              <span>{reason.label}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                      <Textarea
+                        value={pathReason.note || ''}
+                        onChange={(e) => {
+                          const currentReasons = (formData.excluded_reasons || {}) as Record<string, { tags: string[]; note: string }>
+                          handleChange('excluded_reasons', {
+                            ...currentReasons,
+                            [pathValue]: { ...pathReason, note: e.target.value },
+                          })
+                        }}
+                        placeholder="补充说明（可选）"
+                        className="min-h-[60px]"
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* 处理过程 */}
-      <Card>
+      {/* 决策拆解 */}
+      <Card className="border-blue-200 bg-blue-50/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <span>⚡</span> 处理过程
+            <span>🎯</span> 决策拆解
+            <span className="text-sm font-normal text-muted-foreground">判断型输入</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>最终决定中的核心风险（只能选一个）*</Label>
+              <p className="text-xs text-muted-foreground mb-2">经过分析后，你认为最关键的风险点</p>
+              <div className="flex flex-wrap gap-2">
+                {RISK_TYPES.map((risk) => (
+                  <label
+                    key={risk.value}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                      formData.core_risk_priority === risk.value
+                        ? 'border-primary bg-primary/10'
+                        : 'border-input hover:bg-muted'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="core_risk_priority"
+                      value={risk.value}
+                      checked={formData.core_risk_priority === risk.value}
+                      onChange={(e) => handleChange('core_risk_priority', e.target.value)}
+                      className="sr-only"
+                    />
+                    <span className="text-sm">{risk.label}</span>
+                  </label>
+                ))}
+              </div>
+              {formData.primary_concern && formData.core_risk_priority &&
+               formData.primary_concern.toUpperCase() !== formData.core_risk_priority && (
+                <p className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded mt-2">
+                  ⚠️ 你的初始担忧是 {formData.primary_concern}，但核心风险选了 {RISK_TYPES.find(r => r.value === formData.core_risk_priority)?.label}，判断发生了变化
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>次级风险（最多2个）</Label>
+              <div className="flex flex-wrap gap-2">
+                {RISK_TYPES.map((risk) => {
+                  const isSelected = formData.secondary_risks?.includes(risk.value) || false
+                  const isDisabled = !isSelected && (formData.secondary_risks?.length || 0) >= 2
+                  const isCoreRisk = formData.core_risk_priority === risk.value
+                  return (
+                    <label
+                      key={risk.value}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                        isCoreRisk
+                          ? 'border-muted bg-muted/50 text-muted-foreground cursor-not-allowed'
+                          : isSelected
+                          ? 'border-primary bg-primary/10'
+                          : isDisabled
+                          ? 'border-muted bg-muted/30 text-muted-foreground cursor-not-allowed'
+                          : 'border-input hover:bg-muted'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        disabled={isDisabled || isCoreRisk}
+                        onChange={(e) => {
+                          const current = formData.secondary_risks || []
+                          if (e.target.checked) {
+                            handleChange('secondary_risks', [...current, risk.value])
+                          } else {
+                            handleChange('secondary_risks', current.filter((r) => r !== risk.value))
+                          }
+                        }}
+                        className="sr-only"
+                      />
+                      <span className="text-sm">{risk.label}</span>
+                    </label>
+                  )
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                已选 {formData.secondary_risks?.length || 0}/2（不能与核心风险相同）
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 决策表达 */}
+      <Card className="border-purple-200 bg-purple-50/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span>💬</span> 决策表达
+            <span className="text-sm font-normal text-muted-foreground">核心判断输出</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="challenges">难点/挑战 *</Label>
+              <Label htmlFor="decision_one_liner">一句话判断结论 *</Label>
+              <p className="text-xs text-muted-foreground">如果只能用一句话告诉另一个 broker，你会怎么说？（禁止模糊词）</p>
               <Textarea
-                id="challenges"
-                value={formData.challenges || ''}
-                onChange={(e) => handleChange('challenges', e.target.value)}
-                placeholder="描述这个案例的主要难点..."
+                id="decision_one_liner"
+                value={formData.decision_one_liner || ''}
+                onChange={(e) => handleChange('decision_one_liner', e.target.value)}
+                placeholder="直接给出判断，不要用「可能」「视情况」「需要再看」等模糊词..."
+                className={`min-h-[60px] ${(formData.decision_one_liner?.length || 0) > 120 ? 'border-amber-500' : ''}`}
+                maxLength={120}
+              />
+              <div className="flex justify-between items-center">
+                {formData.decision_one_liner && /可能|视情况|需要再看|也许|大概|或许/.test(formData.decision_one_liner) ? (
+                  <p className="text-xs text-red-500">
+                    ⚠️ 检测到模糊词，请给出明确判断
+                  </p>
+                ) : (
+                  <span />
+                )}
+                <p className={`text-xs ${(formData.decision_one_liner?.length || 0) > 120 ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                  {formData.decision_one_liner?.length || 0}/120
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="decision_logic_summary">决策逻辑摘要 *</Label>
+              <p className="text-xs text-muted-foreground">为什么可以/不可以做？为什么不选其他路径？</p>
+              <Textarea
+                id="decision_logic_summary"
+                value={formData.decision_logic_summary || ''}
+                onChange={(e) => handleChange('decision_logic_summary', e.target.value)}
+                placeholder="- 为什么可以 / 不可以做&#10;- 为什么不选其他路径"
                 className="min-h-[100px]"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="solution">解决方案 *</Label>
-              <Textarea
-                id="solution"
-                value={formData.solution || ''}
-                onChange={(e) => handleChange('solution', e.target.value)}
-                placeholder="详细描述解决方案和操作步骤..."
-                className="min-h-[120px]"
-              />
+              <Label>当前采取动作 *</Label>
+              <div className="flex flex-wrap gap-2">
+                {CURRENT_ACTIONS.map((action) => (
+                  <label
+                    key={action.value}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                      formData.current_action === action.value
+                        ? 'border-primary bg-primary/10'
+                        : 'border-input hover:bg-muted'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="current_action"
+                      value={action.value}
+                      checked={formData.current_action === action.value}
+                      onChange={(e) => handleChange('current_action', e.target.value)}
+                      className="sr-only"
+                    />
+                    <span className="text-sm">{action.label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -415,18 +832,18 @@ export function CaseForm({ initialData, onSave, onCancel, isLoading }: CaseFormP
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="result">结果 *</Label>
+              <Label htmlFor="final_outcome">最终结果</Label>
               <Select
-                value={formData.result || ''}
-                onValueChange={(value) => handleChange('result', value)}
+                value={formData.final_outcome || ''}
+                onValueChange={(value) => handleChange('final_outcome', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="请选择" />
+                  <SelectValue placeholder="请选择（初次可空）" />
                 </SelectTrigger>
                 <SelectContent>
-                  {RESULTS.map((result) => (
-                    <SelectItem key={result} value={result}>
-                      {result}
+                  {FINAL_OUTCOMES.map((outcome) => (
+                    <SelectItem key={outcome.value} value={outcome.value}>
+                      {outcome.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -464,27 +881,124 @@ export function CaseForm({ initialData, onSave, onCancel, isLoading }: CaseFormP
                 units={['week']}
               />
             </div>
+
+            {formData.final_outcome && (
+              <>
+                <div className="space-y-2 md:col-span-3">
+                  <Label>结果是否验证最初判断 *</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {OUTCOME_JUDGEMENTS.map((judgement) => (
+                      <label
+                        key={judgement.value}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                          formData.outcome_vs_initial_judgement === judgement.value
+                            ? 'border-primary bg-primary/10'
+                            : 'border-input hover:bg-muted'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="outcome_vs_initial_judgement"
+                          value={judgement.value}
+                          checked={formData.outcome_vs_initial_judgement === judgement.value}
+                          onChange={(e) => handleChange('outcome_vs_initial_judgement', e.target.value)}
+                          className="sr-only"
+                        />
+                        <span className="text-sm">{judgement.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {(formData.outcome_vs_initial_judgement === 'MISMATCH' || formData.outcome_vs_initial_judgement === 'PARTIAL') && (
+                  <>
+                    <div className="space-y-2 md:col-span-3">
+                      <Label>偏差原因 *</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {DEVIATION_REASONS.map((reason) => {
+                          const isSelected = formData.deviation_reasons?.includes(reason.value) || false
+                          return (
+                            <label
+                              key={reason.value}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                                isSelected
+                                  ? 'border-primary bg-primary/10'
+                                  : 'border-input hover:bg-muted'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  const current = formData.deviation_reasons || []
+                                  if (e.target.checked) {
+                                    handleChange('deviation_reasons', [...current, reason.value])
+                                  } else {
+                                    handleChange('deviation_reasons', current.filter((r) => r !== reason.value))
+                                  }
+                                }}
+                                className="sr-only"
+                              />
+                              <span className="text-sm">{reason.label}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 md:col-span-3">
+                      <Label>如果重来，你会改哪一步？*</Label>
+                      <p className="text-xs text-muted-foreground mb-2">回顾整个判断链条，最该调整的环节</p>
+                      <div className="flex flex-wrap gap-2">
+                        {RETROSPECTIVE_CHANGES.map((change) => (
+                          <label
+                            key={change.value}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                              formData.retrospective_change === change.value
+                                ? 'border-primary bg-primary/10'
+                                : 'border-input hover:bg-muted'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="retrospective_change"
+                              value={change.value}
+                              checked={formData.retrospective_change === change.value}
+                              onChange={(e) => handleChange('retrospective_change', e.target.value)}
+                              className="sr-only"
+                            />
+                            <span className="text-sm">{change.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* 经验总结 */}
-      <Card>
+      {/* 可学习总结 */}
+      <Card className="border-green-200 bg-green-50/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <span>💡</span> 经验总结
+            <span>📚</span> 可学习总结
+            <span className="text-sm font-normal text-muted-foreground">未来决策指导</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="key_takeaway">关键经验 *</Label>
+              <Label htmlFor="future_instruction">未来指导 *</Label>
+              <p className="text-xs text-muted-foreground">只写动作，不写感悟</p>
               <Textarea
-                id="key_takeaway"
-                value={formData.key_takeaway || ''}
-                onChange={(e) => handleChange('key_takeaway', e.target.value)}
-                placeholder="总结这个案例的关键经验和教训..."
-                className="min-h-[100px]"
+                id="future_instruction"
+                value={formData.future_instruction || ''}
+                onChange={(e) => handleChange('future_instruction', e.target.value)}
+                placeholder="下次遇到【这些条件】时，我会：&#10;✅ 直接做：...&#10;❌ 绝对不做：..."
+                className="min-h-[120px]"
               />
             </div>
 
