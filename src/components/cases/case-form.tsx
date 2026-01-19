@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { BrokerSelect } from '@/components/cases/broker-select'
 import { CaseInsert, Case } from '@/types/database'
 import {
   CLIENT_TYPES,
@@ -1055,10 +1056,9 @@ export function CaseForm({ initialData, onSave, onCancel, isLoading }: CaseFormP
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="broker_name">经办Broker</Label>
-                <Input
-                  id="broker_name"
-                  value={formData.broker_name || ''}
-                  onChange={(e) => handleChange('broker_name', e.target.value)}
+                <BrokerSelect
+                  value={formData.broker_name}
+                  onChange={(value) => handleChange('broker_name', value)}
                 />
               </div>
 
