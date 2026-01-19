@@ -1057,7 +1057,7 @@ export function CaseForm({ initialData, onSave, onCancel, isLoading }: CaseFormP
               <div className="space-y-2">
                 <Label htmlFor="broker_name">经办Broker</Label>
                 <BrokerSelect
-                  value={formData.broker_name}
+                  value={formData.broker_name ?? null}
                   onChange={(value) => handleChange('broker_name', value)}
                 />
               </div>
