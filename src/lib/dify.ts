@@ -35,6 +35,8 @@ export function caseToMarkdown(caseData: Case): string {
 ## 基本信息
 - **日期**: ${formatDate(caseData.created_at)}
 - **经办Broker**: ${caseData.broker_name || '-'}
+- **初始判断**: ${caseData.initial_gut_feel || '-'}
+- **判断时机**: ${caseData.judgement_timing || '-'}
 
 ## 客户情况
 - **客户类型**: ${caseData.client_type || '-'}
@@ -55,11 +57,16 @@ export function caseToMarkdown(caseData: Case): string {
 - **LVR**: ${caseData.lvr || '-'}%
 - **首付来源**: ${caseData.deposit_source || '-'}
 
-## 难点与挑战
-${caseData.challenges || '无'}
+## 决策分析
+- **核心关注点**: ${caseData.primary_concern || '无'}
+- **核心风险优先级**: ${caseData.core_risk_priority || '-'}
+- **次要风险**: ${caseData.secondary_risks?.join(', ') || '无'}
+- **排除路径**: ${caseData.excluded_paths?.join(', ') || '无'}
 
-## 解决方案
-${caseData.solution || '无'}
+## 决策表达
+- **一句话决策**: ${caseData.decision_one_liner || '无'}
+- **决策逻辑**: ${caseData.decision_logic_summary || '无'}
+- **当前行动**: ${caseData.current_action || '无'}
 
 ## 结果
 - **最终Lender**: ${caseData.lender || '-'}
@@ -67,13 +74,19 @@ ${caseData.solution || '无'}
 - **批准金额**: ${formatCurrency(caseData.approved_amount)}
 - **利率**: ${caseData.interest_rate || '-'}%
 - **审批时间**: ${caseData.approval_time || '-'}
-- **结果**: ${caseData.result || '-'}
+- **最终结果**: ${caseData.final_outcome || '-'}
+- **结果与初始判断对比**: ${caseData.outcome_vs_initial_judgement || '-'}
 
 ## 关键经验总结
-${caseData.key_takeaway || '无'}
+- **偏差原因**: ${caseData.deviation_reasons?.join(', ') || '无'}
+- **回顾性改变**: ${caseData.retrospective_change || '无'}
+- **未来指导**: ${caseData.future_instruction || '无'}
 
 ## 标签
 ${caseData.tags?.join(', ') || '无'}
+
+## 备注
+${caseData.notes || '无'}
 `
 }
 

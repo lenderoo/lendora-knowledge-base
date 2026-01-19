@@ -33,14 +33,14 @@ export function CaseList({ cases, onEdit, onDelete, onSync }: CaseListProps) {
   const filteredCases = cases.filter((c) => {
     if (filter.client_type && c.client_type !== filter.client_type) return false
     if (filter.lender && c.lender !== filter.lender) return false
-    if (filter.result && c.result !== filter.result) return false
+    if (filter.result && c.final_outcome !== filter.result) return false
     if (searchTerm) {
       const search = searchTerm.toLowerCase()
       return (
         c.case_id?.toLowerCase().includes(search) ||
-        c.challenges?.toLowerCase().includes(search) ||
-        c.solution?.toLowerCase().includes(search) ||
-        c.key_takeaway?.toLowerCase().includes(search)
+        c.primary_concern?.toLowerCase().includes(search) ||
+        c.decision_logic_summary?.toLowerCase().includes(search) ||
+        c.future_instruction?.toLowerCase().includes(search)
       )
     }
     return true
@@ -150,7 +150,7 @@ export function CaseList({ cases, onEdit, onDelete, onSync }: CaseListProps) {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="font-bold text-blue-600">{c.case_id}</span>
-                  <Badge variant={getResultVariant(c.result)}>{c.result}</Badge>
+                  <Badge variant={getResultVariant(c.final_outcome)}>{c.final_outcome || '待定'}</Badge>
                   {c.synced_to_dify && (
                     <Badge variant="outline" className="text-purple-600 border-purple-300">
                       已同步
@@ -170,7 +170,7 @@ export function CaseList({ cases, onEdit, onDelete, onSync }: CaseListProps) {
                     <strong>Lender:</strong> {c.lender} | {c.product_type}
                   </p>
                   <p className="text-muted-foreground truncate">
-                    <strong>经验:</strong> {c.key_takeaway}
+                    <strong>经验:</strong> {c.future_instruction || c.decision_one_liner}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1 mt-2">

@@ -12,11 +12,11 @@ import { CaseForm } from '@/components/cases/case-form'
 import { CaseList } from '@/components/cases/case-list'
 import { GuideForm } from '@/components/guides/guide-form'
 import { GuidePreview } from '@/components/guides/guide-preview'
+import { UserNav } from '@/components/layout/user-nav'
 import { Case, CaseInsert } from '@/types/database'
 import {
   OperationGuide,
   GUIDE_CATEGORY_LABELS,
-  GUIDE_SUBCATEGORY_LABELS,
 } from '@/types/operation-guide'
 import { LENDERS } from '@/lib/constants'
 
@@ -218,8 +218,9 @@ export default function Home() {
                 className="bg-purple-600 hover:bg-purple-700"
                 disabled={stats.pending === 0}
               >
-                🔄 同步全部到Dify ({stats.pending})
+                同步全部到Dify ({stats.pending})
               </Button>
+              <UserNav />
             </div>
           </div>
         </div>
