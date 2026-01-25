@@ -237,6 +237,59 @@ export interface Database {
           synced_at?: string
         }
       }
+      expert_rules: {
+        Row: {
+          id: string
+          category: string
+          factor: string
+          risk_level: string
+          scenario: string
+          expert_reasoning: string
+          solutions: string
+          friendly_lenders: string[] | null
+          avoid_lenders: string[] | null
+          required_documents: string[] | null
+          clarifying_questions: string[] | null
+          confidence_level: string
+          source_notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          category: string
+          factor: string
+          risk_level: string
+          scenario: string
+          expert_reasoning: string
+          solutions: string
+          friendly_lenders?: string[] | null
+          avoid_lenders?: string[] | null
+          required_documents?: string[] | null
+          clarifying_questions?: string[] | null
+          confidence_level: string
+          source_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          category?: string
+          factor?: string
+          risk_level?: string
+          scenario?: string
+          expert_reasoning?: string
+          solutions?: string
+          friendly_lenders?: string[] | null
+          avoid_lenders?: string[] | null
+          required_documents?: string[] | null
+          clarifying_questions?: string[] | null
+          confidence_level?: string
+          source_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -260,3 +313,7 @@ export type LenderPolicyInsert = Database['public']['Tables']['lender_policies']
 export type LenderPolicyUpdate = Database['public']['Tables']['lender_policies']['Update']
 
 export type SyncLog = Database['public']['Tables']['sync_logs']['Row']
+
+export type ExpertRule = Database['public']['Tables']['expert_rules']['Row']
+export type ExpertRuleInsert = Database['public']['Tables']['expert_rules']['Insert']
+export type ExpertRuleUpdate = Database['public']['Tables']['expert_rules']['Update']

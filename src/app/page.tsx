@@ -13,6 +13,7 @@ import { CaseList } from '@/components/cases/case-list'
 import { GuideForm } from '@/components/guides/guide-form'
 import { GuidePreview } from '@/components/guides/guide-preview'
 import { UserNav } from '@/components/layout/user-nav'
+import Link from 'next/link'
 import { Case, CaseInsert } from '@/types/database'
 import {
   OperationGuide,
@@ -240,6 +241,11 @@ export default function Home() {
             <TabsTrigger value="new-guide">✏️ 创建指南</TabsTrigger>
             <TabsTrigger value="policies">📜 Lender政策</TabsTrigger>
             <TabsTrigger value="sync">⚙️ 同步管理</TabsTrigger>
+            <Link href="/expert-rules">
+              <Button variant="outline" className="ml-2">
+                🧠 专家逻辑矩阵
+              </Button>
+            </Link>
           </TabsList>
 
           <TabsContent value="list">

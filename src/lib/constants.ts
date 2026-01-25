@@ -173,3 +173,24 @@ export const POLICY_CATEGORIES = [
   'property',
   'general',
 ] as const
+
+// Expert System Constants
+export const EXPERT_CATEGORIES = [
+  { value: 'BORROWER_PROFILE', label: '身份与职业 (Borrower Profile)' },
+  { value: 'INCOME_SERVICING', label: '收入与偿付能力 (Income & Servicing)' },
+  { value: 'FUNDS_DEPOSIT', label: '资金准备 (Funds & Deposit)' },
+  { value: 'CREDIT_CHARACTER', label: '信用与品格 (Credit & Character)' },
+  { value: 'COLLATERAL', label: '抵押物 (Security / Collateral)' },
+] as const
+
+export const EXPERT_RISK_LEVELS = [
+  { value: 'STOP', label: '🔴 Stop (Deal Killer)' },
+  { value: 'HIGH', label: '🟠 High Risk' },
+  { value: 'MEDIUM', label: '🟡 Medium Risk' },
+  { value: 'LOW', label: '🟢 Low Risk' },
+] as const
+
+export const CONFIDENCE_LEVELS = [
+  { value: 'HIGH', label: '高置信度 (基于银行书面政策)' },
+  { value: 'LOW', label: '低置信度 (基于Exception经验)' },
+] as const
