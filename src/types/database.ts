@@ -247,7 +247,9 @@ export interface Database {
           expert_reasoning: string
           solutions: string
           friendly_lenders: string[] | null
+          friendly_lenders_reason: string | null
           avoid_lenders: string[] | null
+          avoid_lenders_reason: string | null
           required_documents: string[] | null
           clarifying_questions: string[] | null
           confidence_level: string
@@ -264,7 +266,9 @@ export interface Database {
           expert_reasoning: string
           solutions: string
           friendly_lenders?: string[] | null
+          friendly_lenders_reason?: string | null
           avoid_lenders?: string[] | null
+          avoid_lenders_reason?: string | null
           required_documents?: string[] | null
           clarifying_questions?: string[] | null
           confidence_level: string
@@ -281,9 +285,55 @@ export interface Database {
           expert_reasoning?: string
           solutions?: string
           friendly_lenders?: string[] | null
+          friendly_lenders_reason?: string | null
           avoid_lenders?: string[] | null
+          avoid_lenders_reason?: string | null
           required_documents?: string[] | null
           clarifying_questions?: string[] | null
+          confidence_level?: string
+          source_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      killer_combinations: {
+        Row: {
+          id: string
+          name: string
+          name_en: string
+          description: string
+          factors: Json
+          expert_reasoning: string
+          solutions: string
+          alternative_lenders: string[] | null
+          confidence_level: string
+          source_notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          name_en: string
+          description: string
+          factors: Json
+          expert_reasoning: string
+          solutions: string
+          alternative_lenders?: string[] | null
+          confidence_level?: string
+          source_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          name_en?: string
+          description?: string
+          factors?: Json
+          expert_reasoning?: string
+          solutions?: string
+          alternative_lenders?: string[] | null
           confidence_level?: string
           source_notes?: string | null
           created_at?: string
@@ -317,3 +367,13 @@ export type SyncLog = Database['public']['Tables']['sync_logs']['Row']
 export type ExpertRule = Database['public']['Tables']['expert_rules']['Row']
 export type ExpertRuleInsert = Database['public']['Tables']['expert_rules']['Insert']
 export type ExpertRuleUpdate = Database['public']['Tables']['expert_rules']['Update']
+
+export type KillerCombinationRow = Database['public']['Tables']['killer_combinations']['Row']
+export type KillerCombinationInsert = Database['public']['Tables']['killer_combinations']['Insert']
+export type KillerCombinationUpdate = Database['public']['Tables']['killer_combinations']['Update']
+
+// Type for the factors JSONB structure
+export interface KillerCombinationFactor {
+  factorId: string
+  conditionValues: string[]
+}

@@ -1,5 +1,6 @@
 // 专家系统预定义因子和条件选项
 // 基于澳洲贷款 4C Framework: Character, Capacity, Capital, Collateral
+// 新增: Policy Window, BDM Preferences, Killer Combinations, Exit Strategy
 
 export interface ConditionOption {
   value: string;
@@ -26,6 +27,19 @@ export interface CategoryDefinition {
   factors: FactorDefinition[];
 }
 
+// Killer Combination - 必死组合
+export interface KillerCombination {
+  id: string;
+  name: string;
+  nameEn: string;
+  description: string;
+  factors: {
+    factorId: string;
+    conditionValues: string[]; // 触发该组合的条件值
+  }[];
+  defaultRiskLevel: 'STOP';
+}
+
 export const EXPERT_SYSTEM_CATEGORIES: CategoryDefinition[] = [
   {
     id: 'BORROWER_PROFILE',
@@ -34,14 +48,16 @@ export const EXPERT_SYSTEM_CATEGORIES: CategoryDefinition[] = [
     description: 'Deal Killer 最集中的地方，Junior 最容易忽略',
     factors: [
       {
-        id: 'payg_probation',
-        name: 'PAYG 试用期',
-        nameEn: 'PAYG Probation',
-        description: '新工作是否在试用期内',
+        id: 'payg_fulltime',
+        name: 'PAYG 全职',
+        nameEn: 'PAYG Full-time',
+        description: '全职员工试用期状态',
         inputType: 'select',
         conditions: [
-          { value: 'within_probation', label: '试用期内 (Within Probation)', riskLevel: 'MEDIUM' },
-          { value: 'passed_probation', label: '已过试用期', riskLevel: 'LOW' },
+          { value: 'permanent_passed', label: '永久全职 (已过试用期)', riskLevel: 'LOW' },
+          { value: 'permanent_within', label: '永久全职 (试用期内)', riskLevel: 'MEDIUM' },
+          { value: 'fixed_term_long', label: '固定期限 > 12个月', riskLevel: 'LOW' },
+          { value: 'fixed_term_short', label: '固定期限 < 12个月', riskLevel: 'MEDIUM' },
         ],
       },
       {
@@ -435,6 +451,241 @@ export const EXPERT_SYSTEM_CATEGORIES: CategoryDefinition[] = [
         ],
       },
     ],
+  },
+  {
+    id: 'POLICY_WINDOW',
+    name: '政策窗口',
+    nameEn: 'Policy Window & Campaigns',
+    description: '时效性银行政策、限时优惠、Campaign 期间特殊逻辑',
+    factors: [
+      {
+        id: 'cashback_campaign',
+        name: 'Cashback 活动',
+        nameEn: 'Cashback Campaign',
+        description: '银行现金返还活动状态',
+        inputType: 'select',
+        conditions: [
+          { value: 'active', label: '活动进行中', riskLevel: 'LOW' },
+          { value: 'ending_soon', label: '即将结束 (< 2周)', riskLevel: 'MEDIUM' },
+          { value: 'ended', label: '活动已结束', riskLevel: 'MEDIUM' },
+        ],
+      },
+      {
+        id: 'lmi_waiver',
+        name: 'LMI 减免政策',
+        nameEn: 'LMI Waiver',
+        description: 'LMI 减免或折扣活动',
+        inputType: 'select',
+        conditions: [
+          { value: 'full_waiver', label: '全额减免 (特定职业)', riskLevel: 'LOW' },
+          { value: 'discount', label: '部分折扣', riskLevel: 'LOW' },
+          { value: 'none', label: '无减免', riskLevel: 'MEDIUM' },
+        ],
+      },
+      {
+        id: 'rate_special',
+        name: '利率特惠',
+        nameEn: 'Rate Special',
+        description: '限时利率优惠活动',
+        inputType: 'select',
+        conditions: [
+          { value: 'active', label: '特惠进行中', riskLevel: 'LOW' },
+          { value: 'ending_7_days', label: '7天内结束', riskLevel: 'MEDIUM' },
+          { value: 'standard', label: '标准利率', riskLevel: 'LOW' },
+        ],
+      },
+      {
+        id: 'policy_change_pending',
+        name: '政策变更预警',
+        nameEn: 'Policy Change Alert',
+        description: '已知即将变更的银行政策',
+        inputType: 'select',
+        conditions: [
+          { value: 'tightening', label: '即将收紧', riskLevel: 'HIGH' },
+          { value: 'loosening', label: '即将放宽', riskLevel: 'LOW' },
+          { value: 'stable', label: '暂无变化', riskLevel: 'LOW' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'BDM_PREFERENCES',
+    name: 'BDM 偏好',
+    nameEn: 'BDM & Soft Factors',
+    description: '非官方政策，资深 Broker 的核心资产 - BDM 关系与偏好',
+    factors: [
+      {
+        id: 'bdm_relationship',
+        name: 'BDM 关系',
+        nameEn: 'BDM Relationship',
+        description: '与银行 BDM 的合作关系',
+        inputType: 'select',
+        conditions: [
+          { value: 'strong', label: '关系良好 (可争取 Exception)', riskLevel: 'LOW' },
+          { value: 'normal', label: '一般关系', riskLevel: 'LOW' },
+          { value: 'new', label: '新 BDM/无关系', riskLevel: 'MEDIUM' },
+        ],
+      },
+      {
+        id: 'accountant_letter_quality',
+        name: '会计师信措辞',
+        nameEn: 'Accountant Letter Quality',
+        description: 'Self-employed 会计师信的专业度和措辞',
+        inputType: 'select',
+        conditions: [
+          { value: 'strong_wording', label: '措辞有力 (业务稳定/抗压性强)', riskLevel: 'LOW' },
+          { value: 'standard', label: '标准措辞', riskLevel: 'LOW' },
+          { value: 'weak', label: '措辞弱/模糊', riskLevel: 'HIGH' },
+          { value: 'questionable', label: '可信度存疑', riskLevel: 'STOP' },
+        ],
+      },
+      {
+        id: 'exception_likelihood',
+        name: 'Exception 可能性',
+        nameEn: 'Exception Likelihood',
+        description: '基于 BDM 反馈判断 Exception 获批概率',
+        inputType: 'select',
+        conditions: [
+          { value: 'high', label: '高概率 (BDM 已口头确认)', riskLevel: 'LOW' },
+          { value: 'medium', label: '中等概率 (有先例)', riskLevel: 'MEDIUM' },
+          { value: 'low', label: '低概率 (罕见)', riskLevel: 'HIGH' },
+          { value: 'unlikely', label: '基本不可能', riskLevel: 'STOP' },
+        ],
+      },
+      {
+        id: 'broker_track_record',
+        name: 'Broker 成交记录',
+        nameEn: 'Broker Track Record',
+        description: '与该银行的历史成交量',
+        inputType: 'select',
+        conditions: [
+          { value: 'top_performer', label: '高成交量 (有议价权)', riskLevel: 'LOW' },
+          { value: 'regular', label: '普通成交量', riskLevel: 'LOW' },
+          { value: 'new_relationship', label: '新合作/低成交量', riskLevel: 'MEDIUM' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'EXIT_STRATEGY',
+    name: '退出机制',
+    nameEn: 'Exit Strategy & Fallback',
+    description: '当主方案失败时的备选路径和退出策略',
+    factors: [
+      {
+        id: 'valuation_shortfall',
+        name: '估价不足对策',
+        nameEn: 'Valuation Shortfall Strategy',
+        description: '估价低于合同价时的应对方案',
+        inputType: 'select',
+        conditions: [
+          { value: 'challenge_val', label: '挑战估价 (需同区3个成交案例)', riskLevel: 'MEDIUM' },
+          { value: 'switch_lender', label: '换银行重新估价', riskLevel: 'MEDIUM' },
+          { value: 'increase_deposit', label: '补足首付', riskLevel: 'HIGH' },
+          { value: 'renegotiate_price', label: '与卖家重新议价', riskLevel: 'HIGH' },
+          { value: 'walk_away', label: '放弃交易', riskLevel: 'STOP' },
+        ],
+      },
+      {
+        id: 'application_declined',
+        name: '申请被拒对策',
+        nameEn: 'Application Declined Strategy',
+        description: '正式申请被拒后的备选方案',
+        inputType: 'select',
+        conditions: [
+          { value: 'appeal', label: '申诉/提供补充材料', riskLevel: 'MEDIUM' },
+          { value: 'second_tier', label: '转二线银行', riskLevel: 'MEDIUM' },
+          { value: 'non_bank', label: '转 Non-bank Lender', riskLevel: 'HIGH' },
+          { value: 'private_lender', label: '转 Private Lender', riskLevel: 'HIGH' },
+          { value: 'wait_and_reapply', label: '等待条件改善后重申', riskLevel: 'MEDIUM' },
+        ],
+      },
+      {
+        id: 'settlement_delay',
+        name: '交割延期风险',
+        nameEn: 'Settlement Delay Risk',
+        description: '交割可能延期时的处理方案',
+        inputType: 'select',
+        conditions: [
+          { value: 'extension_likely', label: '延期申请可能获批', riskLevel: 'MEDIUM' },
+          { value: 'penalty_risk', label: '有违约金风险', riskLevel: 'HIGH' },
+          { value: 'bridge_finance', label: '需过桥贷款', riskLevel: 'HIGH' },
+          { value: 'contract_termination', label: '合同终止风险', riskLevel: 'STOP' },
+        ],
+      },
+      {
+        id: 'rate_lock_expiry',
+        name: '利率锁定到期',
+        nameEn: 'Rate Lock Expiry',
+        description: '利率锁定期到期的影响',
+        inputType: 'select',
+        conditions: [
+          { value: 'within_lock', label: '在锁定期内', riskLevel: 'LOW' },
+          { value: 'expiring_soon', label: '即将到期 (< 2周)', riskLevel: 'MEDIUM' },
+          { value: 'expired', label: '已到期', riskLevel: 'HIGH' },
+          { value: 'no_lock', label: '无利率锁定', riskLevel: 'MEDIUM' },
+        ],
+      },
+    ],
+  },
+];
+
+// 预定义的 Killer Combinations (必死组合)
+export const KILLER_COMBINATIONS: KillerCombination[] = [
+  {
+    id: 'short_abn_high_lvr_apartment',
+    name: 'Short ABN + High LVR + 小公寓',
+    nameEn: 'Short ABN + High LVR + Small Apartment',
+    description: '自雇时间短 + 高杠杆 + 小面积公寓 = 必死组合，Prime Lender 不会做',
+    factors: [
+      { factorId: 'se_abn_age', conditionValues: ['less_than_6_months', '6_to_12_months', '12_to_18_months'] },
+      { factorId: 'lvr', conditionValues: ['90_to_95', 'over_95'] },
+      { factorId: 'apartment_size', conditionValues: ['under_40', '40_to_50'] },
+    ],
+    defaultRiskLevel: 'STOP',
+  },
+  {
+    id: 'visa_high_lvr_investment',
+    name: 'TR签证 + High LVR + 投资房',
+    nameEn: 'TR Visa + High LVR + Investment',
+    description: '临时签证 + 高杠杆 + 投资房 = 几乎不可能获批',
+    factors: [
+      { factorId: 'visa_status', conditionValues: ['tr_485', 'tr_482', 'tr_491', 'student', 'other'] },
+      { factorId: 'lvr', conditionValues: ['80_to_90', '90_to_95', 'over_95'] },
+    ],
+    defaultRiskLevel: 'STOP',
+  },
+  {
+    id: 'credit_default_high_lvr',
+    name: '信用违约 + High LVR',
+    nameEn: 'Credit Default + High LVR',
+    description: '有违约记录的情况下申请高杠杆贷款',
+    factors: [
+      { factorId: 'defaults', conditionValues: ['telco_under_1k_unpaid', 'financial_default'] },
+      { factorId: 'lvr', conditionValues: ['80_to_90', '90_to_95', 'over_95'] },
+    ],
+    defaultRiskLevel: 'STOP',
+  },
+  {
+    id: 'payday_lender_prime_bank',
+    name: '小额高利贷记录 + 四大银行',
+    nameEn: 'Payday Lender + Big 4 Banks',
+    description: '有 Payday Lender 记录后申请四大银行',
+    factors: [
+      { factorId: 'payday_lenders', conditionValues: ['over_3_months_ago', 'recent'] },
+    ],
+    defaultRiskLevel: 'STOP',
+  },
+  {
+    id: 'no_genuine_savings_high_lvr',
+    name: '无真实存款 + High LVR',
+    nameEn: 'No Genuine Savings + High LVR',
+    description: '无真实存款记录申请 90%+ LVR',
+    factors: [
+      { factorId: 'genuine_savings', conditionValues: ['no_genuine_savings'] },
+      { factorId: 'lvr', conditionValues: ['90_to_95', 'over_95'] },
+    ],
+    defaultRiskLevel: 'STOP',
   },
 ];
 
