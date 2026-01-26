@@ -39,7 +39,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpertRule, KillerCombinationRow, KillerCombinationFactor } from "@/types/database";
 import {
   EXPERT_SYSTEM_CATEGORIES,
-  KILLER_COMBINATIONS,
   CategoryDefinition,
   FactorDefinition,
   ConditionOption,
@@ -129,23 +128,6 @@ function getConditionKey(factorId: string, conditionValue: string): string {
   return `${factorId}__${conditionValue}`;
 }
 
-// Killer Combination form data
-interface KillerComboFormData {
-  expert_reasoning: string;
-  solutions: string;
-  alternative_lenders: string[];
-  confidence_level: string;
-  source_notes: string;
-}
-
-const emptyKillerComboFormData: KillerComboFormData = {
-  expert_reasoning: "",
-  solutions: "",
-  alternative_lenders: [],
-  confidence_level: "HIGH",
-  source_notes: "",
-};
-
 export function ExpertRulesTab() {
   const [activeTab, setActiveTab] = useState("single-factor");
   const [activeCategory, setActiveCategory] = useState(EXPERT_SYSTEM_CATEGORIES[0].id);
@@ -157,9 +139,7 @@ export function ExpertRulesTab() {
 
   // Killer combinations state
   const [expandedCombos, setExpandedCombos] = useState<Set<string>>(new Set());
-  const [killerComboForms, setKillerComboForms] = useState<Record<string, KillerComboFormData>>({});
   const [savedKillerCombos, setSavedKillerCombos] = useState<KillerCombinationRow[]>([]);
-  const [savingComboId, setSavingComboId] = useState<string | null>(null);
 
   // Custom killer combo form state
   const [showKillerComboForm, setShowKillerComboForm] = useState(false);
@@ -207,24 +187,6 @@ export function ExpertRulesTab() {
       if (!response.ok) throw new Error("Failed to fetch killer combinations");
       const data = await response.json();
       setSavedKillerCombos(data);
-
-      // Initialize saved combos to forms
-      const formsFromSaved: Record<string, KillerComboFormData> = {};
-      data.forEach((combo: KillerCombinationRow) => {
-        // Match by name since predefined combos have string IDs
-        const matchingPredef = KILLER_COMBINATIONS.find(
-          (k) => k.name === combo.name || k.id === combo.name
-        );
-        const key = matchingPredef?.id || combo.id;
-        formsFromSaved[key] = {
-          expert_reasoning: combo.expert_reasoning,
-          solutions: combo.solutions,
-          alternative_lenders: combo.alternative_lenders || [],
-          confidence_level: combo.confidence_level,
-          source_notes: combo.source_notes || "",
-        };
-      });
-      setKillerComboForms(formsFromSaved);
     } catch (error) {
       console.error("Error fetching killer combinations:", error);
     }
@@ -402,97 +364,6 @@ export function ExpertRulesTab() {
     setExpandedCombos(newExpanded);
   };
 
-  const updateKillerComboForm = (
-    comboId: string,
-    field: keyof KillerComboFormData,
-    value: KillerComboFormData[keyof KillerComboFormData]
-  ) => {
-    setKillerComboForms((prev) => ({
-      ...prev,
-      [comboId]: {
-        ...(prev[comboId] || emptyKillerComboFormData),
-        [field]: value,
-      },
-    }));
-  };
-
-  const getKillerComboForm = (comboId: string): KillerComboFormData => {
-    return killerComboForms[comboId] || emptyKillerComboFormData;
-  };
-
-  const isComboSaved = (comboId: string) => {
-    const predef = KILLER_COMBINATIONS.find((k) => k.id === comboId);
-    if (!predef) return false;
-    return savedKillerCombos.some(
-      (c) => c.name === predef.name || c.name === comboId
-    );
-  };
-
-  const getComboDbRecord = (comboId: string) => {
-    const predef = KILLER_COMBINATIONS.find((k) => k.id === comboId);
-    if (!predef) return null;
-    return savedKillerCombos.find(
-      (c) => c.name === predef.name || c.name === comboId
-    );
-  };
-
-  const handleSaveKillerCombo = async (comboId: string) => {
-    const predef = KILLER_COMBINATIONS.find((k) => k.id === comboId);
-    if (!predef) return;
-
-    const form = getKillerComboForm(comboId);
-
-    if (!form.expert_reasoning) {
-      toast.error("请填写专家逻辑解析");
-      return;
-    }
-    if (!form.solutions) {
-      toast.error("请填写解决方案");
-      return;
-    }
-
-    setSavingComboId(comboId);
-
-    try {
-      const existingRecord = getComboDbRecord(comboId);
-
-      const payload = {
-        name: predef.name,
-        name_en: predef.nameEn,
-        description: predef.description,
-        factors: predef.factors,
-        expert_reasoning: form.expert_reasoning,
-        solutions: form.solutions,
-        alternative_lenders: form.alternative_lenders,
-        confidence_level: form.confidence_level,
-        source_notes: form.source_notes,
-      };
-
-      const url = existingRecord
-        ? `/api/killer-combinations/${existingRecord.id}`
-        : "/api/killer-combinations";
-      const method = existingRecord ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "保存失败");
-      }
-
-      toast.success(`${predef.name} 保存成功`);
-      fetchKillerCombos();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "保存失败");
-    } finally {
-      setSavingComboId(null);
-    }
-  };
-
   // Get factor and condition labels for display
   const getFactorLabel = (factorId: string) => {
     const result = getFactorById(factorId);
@@ -582,10 +453,9 @@ export function ExpertRulesTab() {
     setShowKillerComboForm(true);
   };
 
-  // Get custom combos (ones not matching predefined templates)
-  const getCustomCombos = () => {
-    const predefinedNames = KILLER_COMBINATIONS.map((k) => k.name);
-    return savedKillerCombos.filter((c) => !predefinedNames.includes(c.name));
+  // All saved combos from database (both predefined-based and custom)
+  const getAllSavedCombos = () => {
+    return savedKillerCombos;
   };
 
   return (
@@ -608,7 +478,7 @@ export function ExpertRulesTab() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="single-factor">单因子规则</TabsTrigger>
-          <TabsTrigger value="killer-combos">必死组合 (Killer Combinations)</TabsTrigger>
+          <TabsTrigger value="killer-combos">多因子组合</TabsTrigger>
         </TabsList>
 
         {/* Single Factor Rules Tab */}
@@ -959,11 +829,11 @@ export function ExpertRulesTab() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-xl flex items-center gap-2">
-                    <XCircle className="h-5 w-5 text-red-600" />
-                    必死组合 (Killer Combinations)
+                    <AlertCircle className="h-5 w-5 text-orange-500" />
+                    多因子组合 (Multi-Factor Combinations)
                   </CardTitle>
                   <CardDescription>
-                    多因子联动导致的 Deal Killer 情况 - 遇到这些组合时，Prime Lender 基本不可能做
+                    多因子联动的风险情况 - 当多个因子同时触发时需要特别关注的组合
                   </CardDescription>
                 </div>
                 <Button onClick={() => {
@@ -976,19 +846,24 @@ export function ExpertRulesTab() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Section: Predefined Templates */}
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">预设模板</h3>
-              </div>
-              {KILLER_COMBINATIONS.map((combo) => {
+              {/* Empty state when no saved combinations */}
+              {getAllSavedCombos().length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4 text-orange-200" />
+                  <p>还没有已保存的多因子组合</p>
+                  <p className="text-sm">点击"新建组合"来定义多因子联动的风险情况</p>
+                </div>
+              )}
+
+              {/* All saved combinations */}
+              {getAllSavedCombos().map((combo) => {
                 const isExpanded = expandedCombos.has(combo.id);
-                const isSaved = isComboSaved(combo.id);
-                const form = getKillerComboForm(combo.id);
+                const factors = combo.factors as unknown as KillerCombinationFactor[];
 
                 return (
                   <div
                     key={combo.id}
-                    className={`border rounded-lg ${isSaved ? "bg-green-50/50" : ""}`}
+                    className="border rounded-lg bg-green-50/50"
                   >
                     {/* Combo Header */}
                     <div
@@ -1001,43 +876,59 @@ export function ExpertRulesTab() {
                         ) : (
                           <ChevronRight className="h-5 w-5" />
                         )}
-                        <XCircle className="h-5 w-5 text-red-600" />
+                        <AlertCircle className="h-5 w-5 text-orange-500" />
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{combo.name}</span>
-                            {isSaved && (
-                              <Badge
-                                variant="outline"
-                                className="bg-green-100 text-green-800 text-xs"
-                              >
-                                已录入
-                              </Badge>
-                            )}
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {combo.description}
-                          </p>
+                          {combo.description && (
+                            <p className="text-sm text-muted-foreground">
+                              {combo.description}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      <Badge className="bg-red-100 text-red-800 border-red-300">
-                        🔴 Deal Killer
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-orange-100 text-orange-800 border-orange-300">
+                          ⚠️ 风险组合
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditKillerCombo(combo);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteKillerCombo(combo.id, combo.name);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
                     </div>
 
-                    {/* Combo Details & Form */}
+                    {/* Combo Details */}
                     {isExpanded && (
                       <div className="border-t p-4 space-y-4">
                         {/* Factor Conditions Display */}
-                        <div className="bg-red-50 p-4 rounded-lg">
-                          <h4 className="font-medium text-red-800 mb-2">触发条件组合</h4>
+                        <div className="bg-orange-50 p-4 rounded-lg">
+                          <h4 className="font-medium text-orange-800 mb-2">触发条件组合</h4>
                           <div className="space-y-2">
-                            {combo.factors.map((f, idx) => (
+                            {factors.map((f, idx) => (
                               <div key={idx} className="flex items-center gap-2 text-sm">
-                                <Badge variant="outline" className="text-red-700">
+                                <Badge variant="outline" className="text-orange-700">
                                   {getFactorLabel(f.factorId)}
                                 </Badge>
                                 <span className="text-muted-foreground">:</span>
-                                <span className="text-red-800">
+                                <span className="text-orange-800">
                                   {getConditionLabels(f.factorId, f.conditionValues)}
                                 </span>
                               </div>
@@ -1049,237 +940,44 @@ export function ExpertRulesTab() {
 
                         {/* Expert Reasoning */}
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium">
-                            专家逻辑解析 *
-                          </Label>
-                          <Textarea
-                            value={form.expert_reasoning}
-                            onChange={(e) =>
-                              updateKillerComboForm(combo.id, "expert_reasoning", e.target.value)
-                            }
-                            placeholder="为什么这个组合是 Deal Killer，银行的考量是什么"
-                            rows={3}
-                          />
+                          <Label className="text-sm font-medium">专家逻辑解析</Label>
+                          <p className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded">
+                            {combo.expert_reasoning}
+                          </p>
                         </div>
 
                         {/* Solutions */}
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium">
-                            解决方案 *
-                          </Label>
-                          <Textarea
-                            value={form.solutions}
-                            onChange={(e) =>
-                              updateKillerComboForm(combo.id, "solutions", e.target.value)
-                            }
-                            placeholder="遇到这种情况应该怎么处理，有没有替代方案"
-                            rows={3}
-                          />
+                          <Label className="text-sm font-medium">解决方案</Label>
+                          <p className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded">
+                            {combo.solutions}
+                          </p>
                         </div>
-
-                        <Separator />
 
                         {/* Alternative Lenders */}
-                        <div className="space-y-2">
-                          <Label className="text-sm">可能接受的替代 Lender (Non-Prime)</Label>
-                          <LenderMultiSelect
-                            value={form.alternative_lenders}
-                            onChange={(v) =>
-                              updateKillerComboForm(combo.id, "alternative_lenders", v)
-                            }
-                            placeholder="选择可能接受的 Non-Prime Lender..."
-                          />
-                        </div>
-
-                        <Separator />
-
-                        {/* Confidence & Source */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {combo.alternative_lenders && combo.alternative_lenders.length > 0 && (
                           <div className="space-y-2">
-                            <Label className="text-sm">置信度</Label>
-                            <Select
-                              value={form.confidence_level}
-                              onValueChange={(v) =>
-                                updateKillerComboForm(combo.id, "confidence_level", v)
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="HIGH">高置信度 (银行政策)</SelectItem>
-                                <SelectItem value="LOW">低置信度 (Exception经验)</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <Label className="text-sm font-medium">替代 Lender (Non-Prime)</Label>
+                            <div className="flex flex-wrap gap-2">
+                              {combo.alternative_lenders.map((lender) => (
+                                <Badge key={lender} variant="outline">
+                                  {lender}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
-                          <div className="space-y-2">
-                            <Label className="text-sm">来源备注</Label>
-                            <Input
-                              value={form.source_notes}
-                              onChange={(e) =>
-                                updateKillerComboForm(combo.id, "source_notes", e.target.value)
-                              }
-                              placeholder="例如：多家银行 BDM 确认"
-                            />
-                          </div>
-                        </div>
+                        )}
 
-                        {/* Save Button */}
-                        <div className="flex justify-end pt-2">
-                          <Button
-                            onClick={() => handleSaveKillerCombo(combo.id)}
-                            disabled={savingComboId === combo.id}
-                            size="sm"
-                          >
-                            <Save className="h-4 w-4 mr-2" />
-                            {savingComboId === combo.id
-                              ? "保存中..."
-                              : isSaved
-                              ? "更新"
-                              : "保存"}
-                          </Button>
+                        {/* Metadata */}
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>置信度: {combo.confidence_level === "HIGH" ? "高" : "低"}</span>
+                          {combo.source_notes && <span>来源: {combo.source_notes}</span>}
                         </div>
                       </div>
                     )}
                   </div>
                 );
               })}
-
-              {/* Section: Custom Combinations */}
-              {getCustomCombos().length > 0 && (
-                <>
-                  <Separator className="my-6" />
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">自定义组合</h3>
-                  </div>
-                  {getCustomCombos().map((combo) => {
-                    const isExpanded = expandedCombos.has(combo.id);
-                    const factors = combo.factors as unknown as KillerCombinationFactor[];
-
-                    return (
-                      <div
-                        key={combo.id}
-                        className="border rounded-lg bg-green-50/50"
-                      >
-                        {/* Combo Header */}
-                        <div
-                          className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50"
-                          onClick={() => toggleCombo(combo.id)}
-                        >
-                          <div className="flex items-center gap-3">
-                            {isExpanded ? (
-                              <ChevronDown className="h-5 w-5" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5" />
-                            )}
-                            <XCircle className="h-5 w-5 text-red-600" />
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{combo.name}</span>
-                                <Badge
-                                  variant="outline"
-                                  className="bg-blue-100 text-blue-800 text-xs"
-                                >
-                                  自定义
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {combo.description}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-red-100 text-red-800 border-red-300">
-                              🔴 Deal Killer
-                            </Badge>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditKillerCombo(combo);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteKillerCombo(combo.id, combo.name);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Combo Details */}
-                        {isExpanded && (
-                          <div className="border-t p-4 space-y-4">
-                            {/* Factor Conditions Display */}
-                            <div className="bg-red-50 p-4 rounded-lg">
-                              <h4 className="font-medium text-red-800 mb-2">触发条件组合</h4>
-                              <div className="space-y-2">
-                                {factors.map((f, idx) => (
-                                  <div key={idx} className="flex items-center gap-2 text-sm">
-                                    <Badge variant="outline" className="text-red-700">
-                                      {getFactorLabel(f.factorId)}
-                                    </Badge>
-                                    <span className="text-muted-foreground">:</span>
-                                    <span className="text-red-800">
-                                      {getConditionLabels(f.factorId, f.conditionValues)}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            <Separator />
-
-                            {/* Expert Reasoning */}
-                            <div className="space-y-2">
-                              <Label className="text-sm font-medium">专家逻辑解析</Label>
-                              <p className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded">
-                                {combo.expert_reasoning}
-                              </p>
-                            </div>
-
-                            {/* Solutions */}
-                            <div className="space-y-2">
-                              <Label className="text-sm font-medium">解决方案</Label>
-                              <p className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded">
-                                {combo.solutions}
-                              </p>
-                            </div>
-
-                            {/* Alternative Lenders */}
-                            {combo.alternative_lenders && combo.alternative_lenders.length > 0 && (
-                              <div className="space-y-2">
-                                <Label className="text-sm font-medium">替代 Lender (Non-Prime)</Label>
-                                <div className="flex flex-wrap gap-2">
-                                  {combo.alternative_lenders.map((lender) => (
-                                    <Badge key={lender} variant="outline">
-                                      {lender}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Metadata */}
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>置信度: {combo.confidence_level === "HIGH" ? "高" : "低"}</span>
-                              {combo.source_notes && <span>来源: {combo.source_notes}</span>}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </>
-              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -237,11 +237,11 @@ export function KillerComboForm({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-red-600" />
-            {initialData ? "编辑必死组合" : "新建必死组合"}
+            <AlertCircle className="h-5 w-5 text-orange-500" />
+            {initialData ? "编辑多因子组合" : "新建多因子组合"}
           </DialogTitle>
           <DialogDescription>
-            定义多因子联动的 Deal Killer 情况
+            定义多因子联动的风险情况
           </DialogDescription>
         </DialogHeader>
 
@@ -270,7 +270,7 @@ export function KillerComboForm({
             {formData.factors.map((factorCond, index) => (
               <div
                 key={index}
-                className="border rounded-lg p-4 space-y-3 bg-red-50/30"
+                className="border rounded-lg p-4 space-y-3 bg-orange-50/30"
               >
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium">因子 {index + 1}</Label>
@@ -319,8 +319,8 @@ export function KillerComboForm({
                           }
                           className={`cursor-pointer ${
                             factorCond.conditionValues.includes(cond.value)
-                              ? "bg-red-600 hover:bg-red-700"
-                              : "hover:bg-red-100"
+                              ? "bg-orange-600 hover:bg-orange-700"
+                              : "hover:bg-orange-100"
                           }`}
                           onClick={() => toggleCondition(index, cond.value)}
                         >
@@ -332,6 +332,28 @@ export function KillerComboForm({
                 )}
               </div>
             ))}
+
+            {/* Auto-generated name preview */}
+            {generatedNames.name && (
+              <div className="bg-muted/50 p-3 rounded-lg space-y-1">
+                <Label className="text-xs text-muted-foreground">自动生成组合名称</Label>
+                <p className="font-medium text-orange-700">{generatedNames.name}</p>
+                <p className="text-sm text-muted-foreground">{generatedNames.name_en}</p>
+              </div>
+            )}
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label>描述 (可选)</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, description: e.target.value }))
+                }
+                placeholder="简要描述这个组合的风险情况"
+                rows={2}
+              />
+            </div>
           </div>
 
           <Separator />
@@ -349,7 +371,7 @@ export function KillerComboForm({
                     expert_reasoning: e.target.value,
                   }))
                 }
-                placeholder="为什么这个组合是 Deal Killer，银行的考量是什么"
+                placeholder="为什么这个组合需要特别关注，银行的考量是什么"
                 rows={3}
                 required
               />
@@ -429,7 +451,7 @@ export function KillerComboForm({
             >
               取消
             </Button>
-            <Button type="submit" disabled={isSaving} className="bg-red-600 hover:bg-red-700">
+            <Button type="submit" disabled={isSaving}>
               {isSaving ? "保存中..." : initialData ? "更新" : "创建"}
             </Button>
           </DialogFooter>
