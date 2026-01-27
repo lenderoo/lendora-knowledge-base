@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ArrayInput } from "@/components/expert-rules/array-input";
+import { KillerComboForm } from "@/components/expert-rules/killer-combo-form";
+import { LenderMultiSelect } from "@/components/expert-rules/lender-multi-select";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,6 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -21,32 +22,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  Save,
-  Download,
-  ChevronDown,
-  ChevronRight,
-  AlertCircle,
-  CheckCircle,
-  AlertTriangle,
-  XCircle,
-  Plus,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExpertRule, KillerCombinationRow, KillerCombinationFactor } from "@/types/database";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  EXPERT_SYSTEM_CATEGORIES,
   CategoryDefinition,
-  FactorDefinition,
   ConditionOption,
+  EXPERT_SYSTEM_CATEGORIES,
+  FactorDefinition,
   getFactorById,
 } from "@/lib/expert-factors";
-import { LenderMultiSelect } from "@/components/expert-rules/lender-multi-select";
-import { ArrayInput } from "@/components/expert-rules/array-input";
-import { KillerComboForm } from "@/components/expert-rules/killer-combo-form";
+import { ExpertRule, KillerCombinationFactor, KillerCombinationRow } from "@/types/database";
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  Pencil,
+  Plus,
+  Save,
+  Trash2,
+  XCircle,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // Risk level icon component
 const RiskIcon = ({ level }: { level: string }) => {
@@ -465,7 +465,7 @@ export function ExpertRulesTab() {
         <div>
           <h2 className="text-2xl font-bold">专家逻辑矩阵</h2>
           <p className="text-muted-foreground">
-            Expert System - 单因子规则 & 必死组合
+            Expert System - 单因子规则 & 多因子组合
           </p>
         </div>
         <Button variant="outline" onClick={handleExportAll}>
@@ -485,28 +485,27 @@ export function ExpertRulesTab() {
         <TabsContent value="single-factor" className="space-y-6 mt-4">
           {/* Category Stats */}
           <div className="grid grid-cols-5 gap-4">
-        {EXPERT_SYSTEM_CATEGORIES.map((cat) => {
-          const { saved, total } = getCategorySavedCount(cat.id);
-          return (
-            <Card
-              key={cat.id}
-              className={`cursor-pointer transition-all ${
-                activeCategory === cat.id ? "ring-2 ring-primary" : ""
-              }`}
-              onClick={() => setActiveCategory(cat.id)}
-            >
-              <CardContent className="pt-4">
-                <div className="text-2xl font-bold">
-                  {saved}/{total}
-                </div>
-                <p className="text-xs text-muted-foreground truncate">{cat.name}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+            {EXPERT_SYSTEM_CATEGORIES.map((cat) => {
+              const { saved, total } = getCategorySavedCount(cat.id);
+              return (
+                <Card
+                  key={cat.id}
+                  className={`cursor-pointer transition-all ${activeCategory === cat.id ? "ring-2 ring-primary" : ""
+                    }`}
+                  onClick={() => setActiveCategory(cat.id)}
+                >
+                  <CardContent className="pt-4">
+                    <div className="text-2xl font-bold">
+                      {saved}/{total}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{cat.name}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
 
-      {/* Category Content */}
+          {/* Category Content */}
           {currentCategory && (
             <Card>
               <CardHeader>
@@ -530,295 +529,294 @@ export function ExpertRulesTab() {
                   </Button>
                 </div>
               </CardHeader>
-          <CardContent className="space-y-4">
-            {currentCategory.factors.map((factor) => {
-              const isFactorExpanded = expandedFactors.has(factor.id);
-              const { saved, total } = getFactorSavedCount(factor);
+              <CardContent className="space-y-4">
+                {currentCategory.factors.map((factor) => {
+                  const isFactorExpanded = expandedFactors.has(factor.id);
+                  const { saved, total } = getFactorSavedCount(factor);
 
-              return (
-                <div key={factor.id} className="border rounded-lg">
-                  {/* Factor Header */}
-                  <div
-                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50"
-                    onClick={() => toggleFactor(factor.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      {isFactorExpanded ? (
-                        <ChevronDown className="h-5 w-5" />
-                      ) : (
-                        <ChevronRight className="h-5 w-5" />
-                      )}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{factor.name}</span>
-                          <span className="text-sm text-muted-foreground">
-                            ({factor.nameEn})
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {factor.description}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant={saved === total ? "default" : "secondary"}>
-                      {saved}/{total} 已录入
-                    </Badge>
-                  </div>
-
-                  {/* Factor Conditions List */}
-                  {isFactorExpanded && factor.inputType === "select" && factor.conditions && (
-                    <div className="border-t">
-                      {factor.conditions.map((condition) => {
-                        const condKey = getConditionKey(factor.id, condition.value);
-                        const isCondExpanded = expandedConditions.has(condKey);
-                        const isSaved = isConditionSaved(factor.id, condition.value);
-                        const form = getConditionForm(condKey);
-
-                        return (
-                          <div
-                            key={condition.value}
-                            className={`border-b last:border-b-0 ${
-                              isSaved ? "bg-green-50/50" : ""
-                            }`}
-                          >
-                            {/* Condition Header */}
-                            <div
-                              className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/30"
-                              onClick={() => toggleCondition(condKey)}
-                            >
-                              <div className="flex items-center gap-3 pl-8">
-                                {isCondExpanded ? (
-                                  <ChevronDown className="h-4 w-4" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4" />
-                                )}
-                                <RiskIcon level={form.risk_level || condition.riskLevel} />
-                                <span className="text-sm">{condition.label}</span>
-                                {isSaved && (
-                                  <Badge
-                                    variant="outline"
-                                    className="bg-green-100 text-green-800 text-xs"
-                                  >
-                                    已录入
-                                  </Badge>
-                                )}
-                              </div>
-                              <Badge className={getRiskBadgeClass(form.risk_level || condition.riskLevel)}>
-                                {getRiskLabel(form.risk_level || condition.riskLevel)}
-                              </Badge>
+                  return (
+                    <div key={factor.id} className="border rounded-lg">
+                      {/* Factor Header */}
+                      <div
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50"
+                        onClick={() => toggleFactor(factor.id)}
+                      >
+                        <div className="flex items-center gap-3">
+                          {isFactorExpanded ? (
+                            <ChevronDown className="h-5 w-5" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5" />
+                          )}
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{factor.name}</span>
+                              <span className="text-sm text-muted-foreground">
+                                ({factor.nameEn})
+                              </span>
                             </div>
-
-                            {/* Condition Form */}
-                            {isCondExpanded && (
-                              <div className="px-4 pb-4 pt-2 ml-12 space-y-4 bg-muted/20">
-                                {/* Risk Level Override */}
-                                <div className="space-y-2">
-                                  <Label className="text-sm font-medium">
-                                    风险等级
-                                    <span className="text-muted-foreground font-normal ml-2">
-                                      (默认: {getRiskLabel(condition.riskLevel)})
-                                    </span>
-                                  </Label>
-                                  <Select
-                                    value={form.risk_level || condition.riskLevel}
-                                    onValueChange={(v) =>
-                                      updateConditionForm(condKey, "risk_level", v)
-                                    }
-                                  >
-                                    <SelectTrigger className="w-[200px]">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="STOP">🔴 Stop (Deal Killer)</SelectItem>
-                                      <SelectItem value="HIGH">🟠 High Risk</SelectItem>
-                                      <SelectItem value="MEDIUM">🟡 Medium Risk</SelectItem>
-                                      <SelectItem value="LOW">🟢 Low Risk</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <Separator />
-
-                                {/* Expert Reasoning */}
-                                <div className="space-y-2">
-                                  <Label className="text-sm font-medium">
-                                    专家逻辑解析 *
-                                  </Label>
-                                  <Textarea
-                                    value={form.expert_reasoning}
-                                    onChange={(e) =>
-                                      updateConditionForm(condKey, "expert_reasoning", e.target.value)
-                                    }
-                                    placeholder="解释为什么这是个问题，核心顾虑是什么，判断标准是什么"
-                                    rows={3}
-                                  />
-                                </div>
-
-                                {/* Solutions */}
-                                <div className="space-y-2">
-                                  <Label className="text-sm font-medium">
-                                    对策建议 *
-                                  </Label>
-                                  <Textarea
-                                    value={form.solutions}
-                                    onChange={(e) =>
-                                      updateConditionForm(condKey, "solutions", e.target.value)
-                                    }
-                                    placeholder="给 Junior Broker 的具体操作指令"
-                                    rows={3}
-                                  />
-                                </div>
-
-                                <Separator />
-
-                                {/* Lender Preferences */}
-                                <div className="space-y-4">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                      <Label className="text-sm">友好银行</Label>
-                                      <LenderMultiSelect
-                                        value={form.friendly_lenders}
-                                        onChange={(v) =>
-                                          updateConditionForm(condKey, "friendly_lenders", v)
-                                        }
-                                        placeholder="选择友好银行..."
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label className="text-sm">规避银行</Label>
-                                      <LenderMultiSelect
-                                        value={form.avoid_lenders}
-                                        onChange={(v) =>
-                                          updateConditionForm(condKey, "avoid_lenders", v)
-                                        }
-                                        placeholder="选择需规避的银行..."
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                      <Label className="text-sm text-muted-foreground">为什么友好?</Label>
-                                      <Textarea
-                                        value={form.friendly_lenders_reason}
-                                        onChange={(e) =>
-                                          updateConditionForm(condKey, "friendly_lenders_reason", e.target.value)
-                                        }
-                                        placeholder="解释这些银行为什么对此情况友好..."
-                                        rows={2}
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label className="text-sm text-muted-foreground">为什么规避?</Label>
-                                      <Textarea
-                                        value={form.avoid_lenders_reason}
-                                        onChange={(e) =>
-                                          updateConditionForm(condKey, "avoid_lenders_reason", e.target.value)
-                                        }
-                                        placeholder="解释这些银行为什么应该规避..."
-                                        rows={2}
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <Separator />
-
-                                {/* Supporting Info */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <Label className="text-sm">必备材料</Label>
-                                    <ArrayInput
-                                      value={form.required_documents}
-                                      onChange={(v) =>
-                                        updateConditionForm(condKey, "required_documents", v)
-                                      }
-                                      placeholder="添加材料，按 Enter"
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label className="text-sm">追问问题</Label>
-                                    <ArrayInput
-                                      value={form.clarifying_questions}
-                                      onChange={(v) =>
-                                        updateConditionForm(condKey, "clarifying_questions", v)
-                                      }
-                                      placeholder="添加问题，按 Enter"
-                                    />
-                                  </div>
-                                </div>
-
-                                <Separator />
-
-                                {/* Confidence & Source */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <Label className="text-sm">置信度</Label>
-                                    <Select
-                                      value={form.confidence_level}
-                                      onValueChange={(v) =>
-                                        updateConditionForm(condKey, "confidence_level", v)
-                                      }
-                                    >
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="HIGH">高置信度 (银行政策)</SelectItem>
-                                        <SelectItem value="LOW">低置信度 (Exception经验)</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label className="text-sm">来源备注</Label>
-                                    <Input
-                                      value={form.source_notes}
-                                      onChange={(e) =>
-                                        updateConditionForm(condKey, "source_notes", e.target.value)
-                                      }
-                                      placeholder="例如：ANZ Policy 2024"
-                                    />
-                                  </div>
-                                </div>
-
-                                {/* Save Button */}
-                                <div className="flex justify-end pt-2">
-                                  <Button
-                                    onClick={() =>
-                                      handleSaveCondition(currentCategory, factor, condition)
-                                    }
-                                    disabled={savingKey === condKey}
-                                    size="sm"
-                                  >
-                                    <Save className="h-4 w-4 mr-2" />
-                                    {savingKey === condKey
-                                      ? "保存中..."
-                                      : isSaved
-                                      ? "更新"
-                                      : "保存"}
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
+                            <p className="text-sm text-muted-foreground">
+                              {factor.description}
+                            </p>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                    {/* Text input factor (non-select) */}
-                    {isFactorExpanded && factor.inputType === "text" && (
-                      <div className="border-t p-4">
-                        <p className="text-sm text-muted-foreground mb-4">
-                          此因子为自由文本输入类型，请在下方描述具体情况后填写专家逻辑。
-                        </p>
-                        <Input placeholder={factor.placeholder || "描述具体情况..."} />
+                        </div>
+                        <Badge variant={saved === total ? "default" : "secondary"}>
+                          {saved}/{total} 已录入
+                        </Badge>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+
+                      {/* Factor Conditions List */}
+                      {isFactorExpanded && factor.inputType === "select" && factor.conditions && (
+                        <div className="border-t">
+                          {factor.conditions.map((condition) => {
+                            const condKey = getConditionKey(factor.id, condition.value);
+                            const isCondExpanded = expandedConditions.has(condKey);
+                            const isSaved = isConditionSaved(factor.id, condition.value);
+                            const form = getConditionForm(condKey);
+
+                            return (
+                              <div
+                                key={condition.value}
+                                className={`border-b last:border-b-0 ${isSaved ? "bg-green-50/50" : ""
+                                  }`}
+                              >
+                                {/* Condition Header */}
+                                <div
+                                  className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/30"
+                                  onClick={() => toggleCondition(condKey)}
+                                >
+                                  <div className="flex items-center gap-3 pl-8">
+                                    {isCondExpanded ? (
+                                      <ChevronDown className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4" />
+                                    )}
+                                    <RiskIcon level={form.risk_level || condition.riskLevel} />
+                                    <span className="text-sm">{condition.label}</span>
+                                    {isSaved && (
+                                      <Badge
+                                        variant="outline"
+                                        className="bg-green-100 text-green-800 text-xs"
+                                      >
+                                        已录入
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <Badge className={getRiskBadgeClass(form.risk_level || condition.riskLevel)}>
+                                    {getRiskLabel(form.risk_level || condition.riskLevel)}
+                                  </Badge>
+                                </div>
+
+                                {/* Condition Form */}
+                                {isCondExpanded && (
+                                  <div className="px-4 pb-4 pt-2 ml-12 space-y-4 bg-muted/20">
+                                    {/* Risk Level Override */}
+                                    <div className="space-y-2">
+                                      <Label className="text-sm font-medium">
+                                        风险等级
+                                        <span className="text-muted-foreground font-normal ml-2">
+                                          (默认: {getRiskLabel(condition.riskLevel)})
+                                        </span>
+                                      </Label>
+                                      <Select
+                                        value={form.risk_level || condition.riskLevel}
+                                        onValueChange={(v) =>
+                                          updateConditionForm(condKey, "risk_level", v)
+                                        }
+                                      >
+                                        <SelectTrigger className="w-[200px]">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="STOP">🔴 Stop (Deal Killer)</SelectItem>
+                                          <SelectItem value="HIGH">🟠 High Risk</SelectItem>
+                                          <SelectItem value="MEDIUM">🟡 Medium Risk</SelectItem>
+                                          <SelectItem value="LOW">🟢 Low Risk</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+
+                                    <Separator />
+
+                                    {/* Expert Reasoning */}
+                                    <div className="space-y-2">
+                                      <Label className="text-sm font-medium">
+                                        专家逻辑解析 *
+                                      </Label>
+                                      <Textarea
+                                        value={form.expert_reasoning}
+                                        onChange={(e) =>
+                                          updateConditionForm(condKey, "expert_reasoning", e.target.value)
+                                        }
+                                        placeholder="解释为什么这是个问题，核心顾虑是什么，判断标准是什么"
+                                        rows={3}
+                                      />
+                                    </div>
+
+                                    {/* Solutions */}
+                                    <div className="space-y-2">
+                                      <Label className="text-sm font-medium">
+                                        对策建议 *
+                                      </Label>
+                                      <Textarea
+                                        value={form.solutions}
+                                        onChange={(e) =>
+                                          updateConditionForm(condKey, "solutions", e.target.value)
+                                        }
+                                        placeholder="给 Junior Broker 的具体操作指令"
+                                        rows={3}
+                                      />
+                                    </div>
+
+                                    <Separator />
+
+                                    {/* Lender Preferences */}
+                                    <div className="space-y-4">
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                          <Label className="text-sm">友好银行</Label>
+                                          <LenderMultiSelect
+                                            value={form.friendly_lenders}
+                                            onChange={(v) =>
+                                              updateConditionForm(condKey, "friendly_lenders", v)
+                                            }
+                                            placeholder="选择友好银行..."
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <Label className="text-sm">规避银行</Label>
+                                          <LenderMultiSelect
+                                            value={form.avoid_lenders}
+                                            onChange={(v) =>
+                                              updateConditionForm(condKey, "avoid_lenders", v)
+                                            }
+                                            placeholder="选择需规避的银行..."
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                          <Label className="text-sm text-muted-foreground">为什么友好?</Label>
+                                          <Textarea
+                                            value={form.friendly_lenders_reason}
+                                            onChange={(e) =>
+                                              updateConditionForm(condKey, "friendly_lenders_reason", e.target.value)
+                                            }
+                                            placeholder="解释这些银行为什么对此情况友好..."
+                                            rows={2}
+                                          />
+                                        </div>
+                                        <div className="space-y-2">
+                                          <Label className="text-sm text-muted-foreground">为什么规避?</Label>
+                                          <Textarea
+                                            value={form.avoid_lenders_reason}
+                                            onChange={(e) =>
+                                              updateConditionForm(condKey, "avoid_lenders_reason", e.target.value)
+                                            }
+                                            placeholder="解释这些银行为什么应该规避..."
+                                            rows={2}
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <Separator />
+
+                                    {/* Supporting Info */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div className="space-y-2">
+                                        <Label className="text-sm">必备材料</Label>
+                                        <ArrayInput
+                                          value={form.required_documents}
+                                          onChange={(v) =>
+                                            updateConditionForm(condKey, "required_documents", v)
+                                          }
+                                          placeholder="添加材料，按 Enter"
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-sm">追问问题</Label>
+                                        <ArrayInput
+                                          value={form.clarifying_questions}
+                                          onChange={(v) =>
+                                            updateConditionForm(condKey, "clarifying_questions", v)
+                                          }
+                                          placeholder="添加问题，按 Enter"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <Separator />
+
+                                    {/* Confidence & Source */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div className="space-y-2">
+                                        <Label className="text-sm">置信度</Label>
+                                        <Select
+                                          value={form.confidence_level}
+                                          onValueChange={(v) =>
+                                            updateConditionForm(condKey, "confidence_level", v)
+                                          }
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="HIGH">高置信度 (银行政策)</SelectItem>
+                                            <SelectItem value="LOW">低置信度 (Exception经验)</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-sm">来源备注</Label>
+                                        <Input
+                                          value={form.source_notes}
+                                          onChange={(e) =>
+                                            updateConditionForm(condKey, "source_notes", e.target.value)
+                                          }
+                                          placeholder="例如：ANZ Policy 2024"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    {/* Save Button */}
+                                    <div className="flex justify-end pt-2">
+                                      <Button
+                                        onClick={() =>
+                                          handleSaveCondition(currentCategory, factor, condition)
+                                        }
+                                        disabled={savingKey === condKey}
+                                        size="sm"
+                                      >
+                                        <Save className="h-4 w-4 mr-2" />
+                                        {savingKey === condKey
+                                          ? "保存中..."
+                                          : isSaved
+                                            ? "更新"
+                                            : "保存"}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Text input factor (non-select) */}
+                      {isFactorExpanded && factor.inputType === "text" && (
+                        <div className="border-t p-4">
+                          <p className="text-sm text-muted-foreground mb-4">
+                            此因子为自由文本输入类型，请在下方描述具体情况后填写专家逻辑。
+                          </p>
+                          <Input placeholder={factor.placeholder || "描述具体情况..."} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 

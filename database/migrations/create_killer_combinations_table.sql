@@ -1,4 +1,4 @@
--- Create killer_combinations table for storing "必死组合" expert logic
+-- Create killer_combinations table for storing "多因子组合" expert logic
 -- These represent multi-factor combinations that are automatic deal killers
 
 CREATE TABLE IF NOT EXISTS killer_combinations (
@@ -47,6 +47,6 @@ CREATE TRIGGER trigger_killer_combinations_updated_at
     EXECUTE FUNCTION update_killer_combinations_updated_at();
 
 -- Comments
-COMMENT ON TABLE killer_combinations IS '必死组合 - 多因子联动导致的 Deal Killer 情况';
+COMMENT ON TABLE killer_combinations IS '多因子组合 - 多因子联动导致的 Deal Killer 情况';
 COMMENT ON COLUMN killer_combinations.factors IS 'JSONB array of {factorId, conditionValues[]}';
 COMMENT ON COLUMN killer_combinations.alternative_lenders IS 'Non-prime lenders that might still consider this case';
