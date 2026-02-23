@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { SEED_DATA_PART2 } from "./seed-data-part2";
 import { SEED_DATA_PART3 } from "./seed-data-part3";
+import { SEED_DATA_PART4 } from "./seed-data-part4";
 
 // Create authenticated Supabase client with email/password
 async function createAuthenticatedClient(email: string, password: string) {
@@ -460,7 +461,7 @@ const SEED_DATA_PART1 = [
 ];
 
 // Combine all seed data
-const ALL_SEED_DATA = [...SEED_DATA_PART1, ...SEED_DATA_PART2, ...SEED_DATA_PART3];
+const ALL_SEED_DATA = [...SEED_DATA_PART1, ...SEED_DATA_PART2, ...SEED_DATA_PART3, ...SEED_DATA_PART4];
 
 export async function POST(request: Request) {
   try {

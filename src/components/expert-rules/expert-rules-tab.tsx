@@ -39,12 +39,14 @@ import {
   ChevronDown,
   ChevronRight,
   Download,
+  MapPin,
   Pencil,
   Plus,
   Save,
   Trash2,
   XCircle,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -468,10 +470,18 @@ export function ExpertRulesTab() {
             Expert System - 单因子规则 & 多因子组合
           </p>
         </div>
-        <Button variant="outline" onClick={handleExportAll}>
-          <Download className="h-4 w-4 mr-2" />
-          导出全部 Markdown
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href="/restricted-areas">
+            <Button variant="outline">
+              <MapPin className="h-4 w-4 mr-2" />
+              受限区域管理
+            </Button>
+          </Link>
+          <Button variant="outline" onClick={handleExportAll}>
+            <Download className="h-4 w-4 mr-2" />
+            导出全部 Markdown
+          </Button>
+        </div>
       </div>
 
       {/* Inner Tabs */}
